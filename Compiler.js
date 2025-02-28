@@ -1,7 +1,7 @@
 const { SyncHook } = require("tapable")
 const Complication = require("./Complication")
 const fs = require("fs")
-
+const path = require('path')
 
 class Compiler {
   constructor(options) {
@@ -17,6 +17,16 @@ class Compiler {
     this.hooks.run.call()
     // 开始编译
     const onCompiled = (err, stats, fileDependencies) => {
+      const { assets } = stats
+      // 确定好输出内容后 根据配置确定输出的路径和文件名 把文件内容导入到文件系统
+      for (let filename in assets) {
+        let filePath = path.posix.join(this.options.output.path, filename)
+        try {
+          fs.writeFileSync(filePath, assets[filename], 'utf-8')
+        } catch (e) {
+          console.log("写入失败", e)
+        }
+      }
       callback(err, {
         toJson: () => stats
       })
